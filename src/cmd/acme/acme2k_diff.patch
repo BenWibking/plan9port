@@ -1,0 +1,374 @@
+diff -r ./acme.c /Users/benwibking/9/plan9port/src/cmd/acme/acme.c
+14,18c14,16
+< #include "config.h"
+< 
+< /* for generating syms in mkfile only: */
+< #include <bio.h>
+< #include "edit.h"
+---
+> 	/* for generating syms in mkfile only: */
+> 	#include <bio.h>
+> 	#include "edit.h"
+26c24
+< int		timefmt(Fmt*);
+---
+> int	timefmt(Fmt*);
+30c28
+< char	wdir[512] = ".";
+---
+> char		wdir[512] = ".";
+34c32,33
+< char	*mtpt;
+---
+> int		swapscrollbuttons = FALSE;
+> char		*mtpt;
+40a40,45
+> char		*fontnames[2] =
+> {
+> 	"/lib/font/bit/lucsans/euro.8.font",
+> 	"/lib/font/bit/lucm/unicode.9.font"
+> };
+> 
+62a68
+> 
+75,78c81
+< 		if(globalautoindent)
+< 			globalautoindent = FALSE;
+< 		else
+< 			globalautoindent = TRUE;
+---
+> 		globalautoindent = TRUE;
+80,91c83
+< 
+< /*  bartmode/flag is now an option to be turned on config.h, just
+<  *  because it is way too useful to leave it as an meaningless
+<  *  flag, especially since considering how almost everyone seems
+<  *  to even miss its existence.
+<  *
+<  *  to get to the point, it denies window focus following mouse.
+<  *  how fickle those mice can truly be when decieveth by a soothing
+<  *  treat, a teat or two.
+<  */
+< 
+< /*	case 'b':
+---
+> 	case 'b':
+93,94c85
+< 		break; */
+< 
+---
+> 		break;
+395c386
+< 	char *buf;
+---
+> 	char *buf, *s;
+403c394,396
+< 		sendp(cerr, estrdup(buf));
+---
+> 		s = estrdup(buf);
+> 		sendp(cerr, s);
+> 		free(s);
+404a398
+> 	free(buf);
+982,994c976,988
+< 
+< 		tagcols[BACK]	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TAGBG);
+< 		tagcols[HIGH]	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TAGHLBG);
+< 		tagcols[BORD]	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_COLBUTTON);
+< 		tagcols[TEXT]	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TAGFG);
+< 		tagcols[HTEXT]	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TAGHLFG);
+< 
+< 		textcols[BACK] 	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TXTBG);
+< 		textcols[HIGH] 	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TXTHLBG);
+< 		textcols[BORD] 	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_SCROLLBG);
+< 		textcols[TEXT] 	= allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TXTFG);
+< 		textcols[HTEXT] = allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TXTHLFG);
+< 
+---
+> 		/* Blue */
+> 		tagcols[BACK] = allocimagemix(display, DPalebluegreen, DWhite);
+> 		tagcols[HIGH] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DPalegreygreen);
+> 		tagcols[BORD] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DPurpleblue);
+> 		tagcols[TEXT] = display->black;
+> 		tagcols[HTEXT] = display->black;
+> 	
+> 		/* Yellow */
+> 		textcols[BACK] = allocimagemix(display, DPaleyellow, DWhite);
+> 		textcols[HIGH] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DDarkyellow);
+> 		textcols[BORD] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DYellowgreen);
+> 		textcols[TEXT] = display->black;
+> 		textcols[HTEXT] = display->black;
+996c990
+< 
+---
+> 	
+1018c1012
+< 	tmp = allocimage(display, Rect(0,0,1,1), RGBA32, 1, C_TMPBUTTON);
+---
+> 	tmp = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DMedblue);
+1023c1017
+< 	colbutton = allocimage(display, r, RGBA32, 1, C_WINBUTTON);
+---
+> 	colbutton = allocimage(display, r, screen->chan, 0, DPurpleblue);
+1025,1026c1019,1020
+< 	but2col = allocimage(display, r, screen->chan, 1, C_BUTTON2HL);
+< 	but3col = allocimage(display, r, screen->chan, 1, C_BUTTON3HL);
+---
+> 	but2col = allocimage(display, r, screen->chan, 1, 0xAA0000FF);
+> 	but3col = allocimage(display, r, screen->chan, 1, 0x006600FF);
+1109a1104
+> 
+Only in .: acme2k_diff.patch
+Only in .: backwards.patch
+Only in /Users/benwibking/9/plan9port/src/cmd/acme: config.h~
+diff -r ./dat.h /Users/benwibking/9/plan9port/src/cmd/acme/dat.h
+277d276
+< 	int		backwards;
+diff -r ./exec.c /Users/benwibking/9/plan9port/src/cmd/acme/exec.c
+54d53
+< void	rev(Text*, Text*, Text*, int, int, Rune*, int);
+93d91
+< static Rune LRev[] = { 'R', 'e', 'v', 0 };
+125d122
+< 	{ LRev,		rev,	FALSE,	FALSE,	XXX		},
+199a197
+> 				free(r);
+414,429d411
+< rev(Text *et, Text *_1, Text *_2, int _3, int _4, Rune *_5, int _6)
+< {
+< 	USED(_1);
+< 	USED(_2);
+< 	USED(_3);
+< 	USED(_4);
+< 	USED(_4);
+< 	USED(_6);
+< 
+< 	if (et->w->backwards) 
+< 		et->w->backwards = 0;
+< 	else 
+< 		et->w->backwards = 1;
+< }
+< 
+< void
+diff -r ./fns.h /Users/benwibking/9/plan9port/src/cmd/acme/fns.h
+87d86
+< Range	regexp(uint showerr, Text *t, Range lim, Range r, Rune *pat, int dir, int *foundp);
+diff -r ./look.c /Users/benwibking/9/plan9port/src/cmd/acme/look.c
+93,96d92
+< 	// for backwards search
+< 	int eval;
+< 	Range ra;
+< 	Rune *pat;
+190,195d185
+< 		if (t->w != nil && t->w->backwards) {
+< 			pat = runemalloc(q1-q0+1);
+< 			for (eval = 0; eval < q1-q0; eval++)
+< 				pat[eval] = r[eval];
+< 			pat[q1-q0] = 0;
+< 		}
+206,209c196
+< 	if(expanded == FALSE) {
+< 		if (t->w != nil && t->w->backwards) {
+< 			free(pat);
+< 		}
+---
+> 	if(expanded == FALSE)
+211d197
+< 	}
+215,226d200
+< 		if (t->w != nil && t->w->backwards) {
+< 			ra = range(e.q0, e.q1);
+< 			ra = regexp(TRUE, t, range(-1,-1), ra, pat, '-', &eval);
+< 			if (ra.q0 < 0 || ra.q1 < 0) {
+< 				goto Return;
+< 			}		
+< 			textshow(t, ra.q0, ra.q1, 1);
+< 			winsettag(t->w);
+< 			seltext = t;
+< 			moveto(mousectl, addpt(frptofchar(&t->fr, t->fr.p0), Pt(4, font->height-4)));
+< 			goto Return;
+< 		}
+245,247d218
+< 	if (t->w != nil && t->w->backwards) {
+< 		free(pat);
+< 	}
+674c645
+< 	if(expandfile(t, q0, q1, e)) 
+---
+> 	if(expandfile(t, q0, q1, e))
+diff -r ./mkfile /Users/benwibking/9/plan9port/src/cmd/acme/mkfile
+32d31
+< 	config.h
+diff -r ./rows.c /Users/benwibking/9/plan9port/src/cmd/acme/rows.c
+615a616
+> 			free(r);
+628a630
+> 			free(r);
+diff -r ./text.c /Users/benwibking/9/plan9port/src/cmd/acme/text.c
+543c543
+< 	if(c == 0x08 || c == 0x7F)	/* ^H: erase character [backspace key *or* delete key] */
+---
+> 	if(c == 0x08)	/* ^H: erase character */
+693a694,698
+> 	case Kdown:
+> 		if(t->what == Tag)
+> 			goto Tagdown;
+> 		n = t->fr.maxlines/3;
+> 		goto case_Down;
+706c711,716
+< 		return;	
+---
+> 		return;
+> 	case Kup:
+> 		if(t->what == Tag)
+> 			goto Tagup;
+> 		n = t->fr.maxlines/3;
+> 		goto case_Up;
+718,726c728
+< 
+< /* 
+<  *  Keybindings for moving the cursor up and 
+<  *  down the text via up and down arrow keys.
+<  */
+< 	
+< 	case Kdown:
+< 		if(t->what == Tag)
+<  			goto Tagdown;
+---
+> 	case Khome:
+728,751c730,734
+< 		/* 1rst check for being in the last line*/	
+< 		q0 = t->q0;
+< 		q1 = q0;
+< 		if (q1) q1--;
+< 		nnb = 0;
+< 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
+< 			q0++;
+< 		if (q0 == (t->file->b.nc)-1) {
+< 			textshow(t, q0, q0, TRUE);
+< 			return;
+< 		}
+< 		q0++;
+< 		/* find old pos in ln */
+< 		while(q1>1 && textreadc(t, q1)!='\n'){
+< 			nnb++;
+< 			q1--;
+< 		}
+< 		/* go right until reachg pos or \n */
+< 		while(q0<t->file->b.nc && (nnb>0 && textreadc(t, q0)!='\n')){
+< 			q0++;
+< 			nnb--;
+< 		}
+< 		if (q0>1 && q0<t->file->b.nc)
+< 			textshow(t, q0, q0, TRUE);
+---
+> 		if(t->org > t->iq1) {
+> 			q0 = textbacknl(t, t->iq1, 1);
+> 			textsetorigin(t, q0, TRUE);
+> 		} else
+> 			textshow(t, 0, 0, FALSE);
+753,755c736
+< 	case Kup:
+< 		if(t->what == Tag)
+< 			goto Tagup;
+---
+> 	case Kend:
+757,762c738,746
+< 		nnb = 0;
+< 		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
+< 			nnb = textbswidth(t, 0x15); 
+< 		/* BOL - 1 if not first line of txt BOL*/
+< 		if( t->q0-nnb > 1  && textreadc(t, t->q0-nnb-1)=='\n' ) nnb++;
+< 		textshow(t, t->q0-nnb, t->q0-nnb, TRUE);
+---
+> 		if(t->iq1 > t->org+t->fr.nchars) {
+> 			if(t->iq1 > t->file->b.nc) {
+> 				// should not happen, but does. and it will crash textbacknl.
+> 				t->iq1 = t->file->b.nc;
+> 			}
+> 			q0 = textbacknl(t, t->iq1, 1);
+> 			textsetorigin(t, q0, TRUE);
+> 		} else
+> 			textshow(t, t->file->b.nc, t->file->b.nc, FALSE);
+764,772c748
+< 
+< /*
+<  *  Home and End now respectively take you to the
+<  *  beginning and to the end of the line respectively.
+<  *  Also keep the original ^A and ^E keybindings.
+<  */
+< 
+< 	case 0x01:
+< 	case Khome:
+---
+> 	case 0x01:	/* ^A: beginning of line */
+780,781c756
+< 	case 0x05:
+< 	case Kend:
+---
+> 	case 0x05:	/* ^E: end of line */
+788,790d762
+< 		
+< 	/* TODO remap CTRL+c to DEL key if flag enabled */
+< 	/* (or modify rc directly to enable this behavior) */	
+802c774
+< 		return;	
+---
+> 		return;		
+807,808c779,780
+< 		t->w->tagexpand = TRUE;
+< 		winresize(t->w, t->w->r, FALSE, TRUE);
+---
+> 			t->w->tagexpand = TRUE;
+> 			winresize(t->w, t->w->r, FALSE, TRUE);
+810a783
+> 	
+820,822d792
+< 	
+< 
+< 	
+827,829c797
+< 	
+< 	/* cut/paste must be done after the seq++/filemark */
+< 	
+---
+> 	/* cut/paste must be done after the seq++/filemark */
+851,852c819
+< 	
+< 
+---
+> 	}
+860d826
+< 	
+881,894c847
+< 
+< 	case 0x7F:  /* [delete key] */
+< 		/* ensure we're not at the end of the buffer */
+< 		if(t->q1 >= t->file->b.nc) {
+< 			return;
+< 		}
+< 		/* emulate rightarrow key */
+< 		typecommit(t);
+< 		textshow(t, t->q1+1, t->q1+1, TRUE);
+< 		/* emulate backspace key */
+< 		// r = 0x08; /* needed for textbswidth() to return correct value */
+< 					 /* now fall through to next case */
+< 		
+< 	case 0x08:	/* ^H: erase character [backspace key] */
+---
+> 	case 0x08:	/* ^H: erase character */
+896c849
+< 	case 0x17:	/* ^W: erase  word */
+---
+> 	case 0x17:	/* ^W: erase word */
+diff -r ./wind.c /Users/benwibking/9/plan9port/src/cmd/acme/wind.c
+450c450
+< 		'S', 'n', 'a', 'r', 'f', ' ', 'R', 'e', 'v', 0 };
+---
+> 		'S', 'n', 'a', 'r', 'f', 0 };
+481,482c481,482
+< 	runemove(new+i, Ldelsnarf, 14);
+< 	i += 14;
+---
+> 	runemove(new+i, Ldelsnarf, 10);
+> 	i += 10;

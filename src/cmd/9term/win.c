@@ -395,7 +395,7 @@ stdinproc(void *v)
 		case 'M':
 			switch(e.c2){
 			case 'I':
-				if(e.nr == 1 && e.r[0] == 0x7F) {
+			  if(e.nr == 1 && (e.r[0] == 0x7F || e.r[0] == 0x03)) {
 					char buf[1];
 					fsprint(addrfd, "#%ud,#%ud", e.q0, e.q1);
 					fswrite(datafd, "", 0);
@@ -700,7 +700,7 @@ addtype(int c, uint p0, char *b, int nb, int nr)
 
 	for(i=0; i<nb; i+=w){
 		w = chartorune(&r, b+i);
-		if((r==0x7F||r==3) && c=='K'){
+		if((r==0x7F||r==3||r==0x03) && c=='K'){
 			write(rcfd, "\x7F", 1);
 			/* toss all typing */
 			q.p += ntyper+nr;
@@ -710,7 +710,7 @@ addtype(int c, uint p0, char *b, int nb, int nr)
 			/* buglet:  more than one delete ignored */
 			return;
 		}
-		if(r=='\n' || r==0x04)
+		if(r=='\n' || r==0x4)
 			ntypebreak++;
 	}
 	typing = realloc(typing, ntypeb+nb);

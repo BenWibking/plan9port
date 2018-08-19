@@ -1,0 +1,170 @@
+diff -r 4f495f8070af src/cmd/acme/dat.h
+--- a/src/cmd/acme/dat.h	Mon Sep 12 12:36:30 2011 -0400
++++ b/src/cmd/acme/dat.h	Wed Nov 23 16:26:45 2011 +0100
+@@ -271,6 +271,7 @@
+ 	int		taglines;
+ 	Rectangle	tagtop;
+ 	QLock	editoutlk;
++	int		backwards;
+ };
+ 
+ void	wininit(Window*, Window*, Rectangle);
+diff -r 4f495f8070af src/cmd/acme/exec.c
+--- a/src/cmd/acme/exec.c	Mon Sep 12 12:36:30 2011 -0400
++++ b/src/cmd/acme/exec.c	Wed Nov 23 16:26:45 2011 +0100
+@@ -49,6 +49,7 @@
+ void	paste(Text*, Text*, Text*, int, int, Rune*, int);
+ void	put(Text*, Text*, Text*, int, int, Rune*, int);
+ void	putall(Text*, Text*, Text*, int, int, Rune*, int);
++void	rev(Text*, Text*, Text*, int, int, Rune*, int);
+ void	sendx(Text*, Text*, Text*, int, int, Rune*, int);
+ void	sort(Text*, Text*, Text*, int, int, Rune*, int);
+ void	tab(Text*, Text*, Text*, int, int, Rune*, int);
+@@ -87,6 +88,7 @@
+ static Rune LPut[] = { 'P', 'u', 't', 0 };
+ static Rune LPutall[] = { 'P', 'u', 't', 'a', 'l', 'l', 0 };
+ static Rune LRedo[] = { 'R', 'e', 'd', 'o', 0 };
++static Rune LRev[] = { 'R', 'e', 'v', 0 };
+ static Rune LSend[] = { 'S', 'e', 'n', 'd', 0 };
+ static Rune LSnarf[] = { 'S', 'n', 'a', 'r', 'f', 0 };
+ static Rune LSort[] = { 'S', 'o', 'r', 't', 0 };
+@@ -118,6 +120,7 @@
+ 	{ LPut,		put,		FALSE,	XXX,		XXX		},
+ 	{ LPutall,		putall,	FALSE,	XXX,		XXX		},
+ 	{ LRedo,		undo,	FALSE,	FALSE,	XXX		},
++	{ LRev,		rev,	FALSE,	FALSE,	XXX		},
+ 	{ LSend,		sendx,	TRUE,	XXX,		XXX		},
+ 	{ LSnarf,		cut,		FALSE,	TRUE,	FALSE	},
+ 	{ LSort,		sort,		FALSE,	XXX,		XXX		},
+@@ -402,6 +405,22 @@
+ }
+ 
+ void
++rev(Text *et, Text *_1, Text *_2, int _3, int _4, Rune *_5, int _6)
++{
++	USED(_1);
++	USED(_2);
++	USED(_3);
++	USED(_4);
++	USED(_4);
++	USED(_6);
++
++	if (et->w->backwards) 
++		et->w->backwards = 0;
++	else 
++		et->w->backwards = 1;
++}
++
++void
+ sort(Text *et, Text *_0, Text *_1, int _2, int _3, Rune *_4, int _5)
+ {
+ 	USED(_0);
+diff -r 4f495f8070af src/cmd/acme/fns.h
+--- a/src/cmd/acme/fns.h	Mon Sep 12 12:36:30 2011 -0400
++++ b/src/cmd/acme/fns.h	Wed Nov 23 16:26:45 2011 +0100
+@@ -83,6 +83,7 @@
+ void *erealloc(void*, uint);
+ char	*estrdup(char*);
+ Range		address(uint, Text*, Range, Range, void*, uint, uint, int (*)(void*, uint),  int*, uint*);
++Range	regexp(uint showerr, Text *t, Range lim, Range r, Rune *pat, int dir, int *foundp);
+ int		rxexecute(Text*, Rune*, uint, uint, Rangeset*);
+ int		rxbexecute(Text*, uint, Rangeset*);
+ Window*	makenewwindow(Text *t);
+diff -r 4f495f8070af src/cmd/acme/look.c
+--- a/src/cmd/acme/look.c	Mon Sep 12 12:36:30 2011 -0400
++++ b/src/cmd/acme/look.c	Wed Nov 23 16:26:45 2011 +0100
+@@ -89,6 +89,10 @@
+ 	Plumbmsg *m;
+ 	Runestr dir;
+ 	char buf[32];
++	// for backwards search
++	int eval;
++	Range ra;
++	Rune *pat;
+ 
+ 	ct = seltext;
+ 	if(ct == nil)
+@@ -182,6 +186,12 @@
+ 		bufread(&t->file->b, q0, r, q1-q0);
+ 		m->data = runetobyte(r, q1-q0);
+ 		m->ndata = strlen(m->data);
++		if (t->w != nil && t->w->backwards) {
++			pat = runemalloc(q1-q0+1);
++			for (eval = 0; eval < q1-q0; eval++)
++				pat[eval] = r[eval];
++			pat[q1-q0] = 0;
++		}
+ 		free(r);
+ 		if(m->ndata<messagesize-1024 && plumbsendtofid(plumbsendfid, m) >= 0){
+ 			plumbfree(m);
+@@ -192,11 +202,27 @@
+ 	}
+ 
+ 	/* interpret alphanumeric string ourselves */
+-	if(expanded == FALSE)
++	if(expanded == FALSE) {
++		if (t->w != nil && t->w->backwards) {
++			free(pat);
++		}
+ 		return;
++	}
+ 	if(e.name || e.u.at)
+ 		openfile(t, &e);
+ 	else{
++		if (t->w != nil && t->w->backwards) {
++			ra = range(e.q0, e.q1);
++			ra = regexp(TRUE, t, range(-1,-1), ra, pat, '-', &eval);
++			if (ra.q0 < 0 || ra.q1 < 0) {
++				goto Return;
++			}		
++			textshow(t, ra.q0, ra.q1, 1);
++			winsettag(t->w);
++			seltext = t;
++			moveto(mousectl, addpt(frptofchar(&t->fr, t->fr.p0), Pt(4, font->height-4)));
++			goto Return;
++		}
+ 		if(t->w == nil)
+ 			return;
+ 		ct = &t->w->body;
+@@ -215,6 +241,9 @@
+ 	}
+ 
+    Return:
++	if (t->w != nil && t->w->backwards) {
++		free(pat);
++	}
+ 	free(e.name);
+ 	free(e.bname);
+ }
+@@ -640,7 +669,7 @@
+ 			e->jump = FALSE;
+ 	}
+ 
+-	if(expandfile(t, q0, q1, e))
++	if(expandfile(t, q0, q1, e)) 
+ 		return TRUE;
+ 
+ 	if(q0 == q1){
+diff -r 4f495f8070af src/cmd/acme/wind.c
+--- a/src/cmd/acme/wind.c	Mon Sep 12 12:36:30 2011 -0400
++++ b/src/cmd/acme/wind.c	Wed Nov 23 16:26:45 2011 +0100
+@@ -408,7 +408,7 @@
+ 	Rune *new, *old, *r;
+ 	uint q0, q1;
+ 	static Rune Ldelsnarf[] = { ' ', 'D', 'e', 'l', ' ',
+-		'S', 'n', 'a', 'r', 'f', 0 };
++		'S', 'n', 'a', 'r', 'f', ' ', 'R', 'e', 'v', 0 };
+ 	static Rune Lundo[] = { ' ', 'U', 'n', 'd', 'o', 0 };
+ 	static Rune Lredo[] = { ' ', 'R', 'e', 'd', 'o', 0 };
+ 	static Rune Lget[] = { ' ', 'G', 'e', 't', 0 };
+@@ -439,8 +439,8 @@
+ 	i = 0;
+ 	runemove(new+i, w->body.file->name, w->body.file->nname);
+ 	i += w->body.file->nname;
+-	runemove(new+i, Ldelsnarf, 10);
+-	i += 10;
++	runemove(new+i, Ldelsnarf, 14);
++	i += 14;
+ 	if(w->filemenu){
+ 		if(w->body.needundo || w->body.file->delta.nc>0 || w->body.ncache){
+ 			runemove(new+i, Lundo, 5);

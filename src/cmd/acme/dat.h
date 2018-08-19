@@ -274,6 +274,7 @@ struct Window
 	int		taglines;
 	Rectangle	tagtop;
 	QLock	editoutlk;
+	int		backwards;
 };
 
 void	wininit(Window*, Window*, Rectangle);
