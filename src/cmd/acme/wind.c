@@ -447,7 +447,7 @@ winsettag1(Window *w)
 	Rune *new, *old, *r;
 	uint q0, q1;
 	static Rune Ldelsnarf[] = { ' ', 'D', 'e', 'l', ' ',
-		'S', 'n', 'a', 'r', 'f', 0 };
+		'S', 'n', 'a', 'r', 'f', ' ', 'R', 'e', 'v', 0 };
 	static Rune Lundo[] = { ' ', 'U', 'n', 'd', 'o', 0 };
 	static Rune Lredo[] = { ' ', 'R', 'e', 'd', 'o', 0 };
 	static Rune Lget[] = { ' ', 'G', 'e', 't', 0 };
@@ -478,8 +478,8 @@ winsettag1(Window *w)
 	i = 0;
 	runemove(new+i, w->body.file->name, w->body.file->nname);
 	i += w->body.file->nname;
-	runemove(new+i, Ldelsnarf, 10);
-	i += 10;
+	runemove(new+i, Ldelsnarf, 14);
+	i += 14;
 	if(w->filemenu){
 		if(w->body.needundo || w->body.file->delta.nc>0 || w->body.ncache){
 			runemove(new+i, Lundo, 5);

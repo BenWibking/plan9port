@@ -51,6 +51,7 @@ void	newcol(Text*, Text*, Text*, int, int, Rune*, int);
 void	paste(Text*, Text*, Text*, int, int, Rune*, int);
 void	put(Text*, Text*, Text*, int, int, Rune*, int);
 void	putall(Text*, Text*, Text*, int, int, Rune*, int);
+void	rev(Text*, Text*, Text*, int, int, Rune*, int);
 void	sendx(Text*, Text*, Text*, int, int, Rune*, int);
 void	sort(Text*, Text*, Text*, int, int, Rune*, int);
 void	tab(Text*, Text*, Text*, int, int, Rune*, int);
@@ -89,6 +90,7 @@ static Rune LPaste[] = { 'P', 'a', 's', 't', 'e', 0 };
 static Rune LPut[] = { 'P', 'u', 't', 0 };
 static Rune LPutall[] = { 'P', 'u', 't', 'a', 'l', 'l', 0 };
 static Rune LRedo[] = { 'R', 'e', 'd', 'o', 0 };
+static Rune LRev[] = { 'R', 'e', 'v', 0 };
 static Rune LSend[] = { 'S', 'e', 'n', 'd', 0 };
 static Rune LSnarf[] = { 'S', 'n', 'a', 'r', 'f', 0 };
 static Rune LSort[] = { 'S', 'o', 'r', 't', 0 };
@@ -120,6 +122,7 @@ Exectab exectab[] = {
 	{ LPut,		put,		FALSE,	XXX,		XXX		},
 	{ LPutall,		putall,	FALSE,	XXX,		XXX		},
 	{ LRedo,		undo,	FALSE,	FALSE,	XXX		},
+	{ LRev,		rev,	FALSE,	FALSE,	XXX		},
 	{ LSend,		sendx,	TRUE,	XXX,		XXX		},
 	{ LSnarf,		cut,		FALSE,	TRUE,	FALSE	},
 	{ LSort,		sort,		FALSE,	XXX,		XXX		},
@@ -194,7 +197,6 @@ execute(Text *t, uint aq0, uint aq1, int external, Text *argt)
 		aa = getbytearg(argt, TRUE, TRUE, &a);
 		if(a){	
 			if(strlen(a) > EVENTSIZE){	/* too big; too bad */
-				free(r);
 				free(aa);
 				free(a);
 				warning(nil, "argument string too long\n");
@@ -406,6 +408,22 @@ del(Text *et, Text *_0, Text *_1, int flag1, int _2, Rune *_3, int _4)
 		return;
 	if(flag1 || et->w->body.file->ntext>1 || winclean(et->w, FALSE))
 		colclose(et->col, et->w, TRUE);
+}
+
+void
+rev(Text *et, Text *_1, Text *_2, int _3, int _4, Rune *_5, int _6)
+{
+	USED(_1);
+	USED(_2);
+	USED(_3);
+	USED(_4);
+	USED(_4);
+	USED(_6);
+
+	if (et->w->backwards) 
+		et->w->backwards = 0;
+	else 
+		et->w->backwards = 1;
 }
 
 void

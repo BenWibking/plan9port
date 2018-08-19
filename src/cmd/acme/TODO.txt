@@ -1,0 +1,2 @@
+* send  CTRL+C to DEL (if flag enabled)
+* restore original Acme colorscheme

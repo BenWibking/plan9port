@@ -84,6 +84,7 @@ void *emalloc(uint);
 void *erealloc(void*, uint);
 char	*estrdup(char*);
 Range		address(uint, Text*, Range, Range, void*, uint, uint, int (*)(void*, uint),  int*, uint*);
+Range	regexp(uint showerr, Text *t, Range lim, Range r, Rune *pat, int dir, int *foundp);
 int		rxexecute(Text*, Rune*, uint, uint, Rangeset*);
 int		rxbexecute(Text*, uint, Rangeset*);
 Window*	makenewwindow(Text *t);

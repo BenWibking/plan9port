@@ -540,7 +540,7 @@ textbswidth(Text *t, Rune c)
 	int skipping;
 
 	/* there is known to be at least one character to erase */
-	if(c == 0x08)	/* ^H: erase character */
+	if(c == 0x08 || c == 0x7F)	/* ^H: erase character [backspace key *or* delete key] */
 		return 1;
 	q = t->q0;
 	skipping = TRUE;
@@ -691,11 +691,6 @@ texttype(Text *t, Rune r)
 		if(t->q1 < t->file->b.nc)
 			textshow(t, t->q1+1, t->q1+1, TRUE);
 		return;
-	case Kdown:
-		if(t->what == Tag)
-			goto Tagdown;
-		n = t->fr.maxlines/3;
-		goto case_Down;
 	case Kscrollonedown:
 		if(t->what == Tag)
 			goto Tagdown;
@@ -708,12 +703,7 @@ texttype(Text *t, Rune r)
 	case_Down:
 		q0 = t->org+frcharofpt(&t->fr, Pt(t->fr.r.min.x, t->fr.r.min.y+n*t->fr.font->height));
 		textsetorigin(t, q0, TRUE);
-		return;
-	case Kup:
-		if(t->what == Tag)
-			goto Tagup;
-		n = t->fr.maxlines/3;
-		goto case_Up;
+		return;	
 	case Kscrolloneup:
 		if(t->what == Tag)
 			goto Tagup;
@@ -725,27 +715,61 @@ texttype(Text *t, Rune r)
 		q0 = textbacknl(t, t->org, n);
 		textsetorigin(t, q0, TRUE);
 		return;
+
+/* 
+ *  Keybindings for moving the cursor up and 
+ *  down the text via up and down arrow keys.
+ */
+	
+	case Kdown:
+		if(t->what == Tag)
+ 			goto Tagdown;
+		typecommit(t);
+		/* 1rst check for being in the last line*/	
+		q0 = t->q0;
+		q1 = q0;
+		if (q1) q1--;
+		nnb = 0;
+		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
+			q0++;
+		if (q0 == (t->file->b.nc)-1) {
+			textshow(t, q0, q0, TRUE);
+			return;
+		}
+		q0++;
+		/* find old pos in ln */
+		while(q1>1 && textreadc(t, q1)!='\n'){
+			nnb++;
+			q1--;
+		}
+		/* go right until reachg pos or \n */
+		while(q0<t->file->b.nc && (nnb>0 && textreadc(t, q0)!='\n')){
+			q0++;
+			nnb--;
+		}
+		if (q0>1 && q0<t->file->b.nc)
+			textshow(t, q0, q0, TRUE);
+		return;
+	case Kup:
+		if(t->what == Tag)
+			goto Tagup;
+		typecommit(t);
+		nnb = 0;
+		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
+			nnb = textbswidth(t, 0x15); 
+		/* BOL - 1 if not first line of txt BOL*/
+		if( t->q0-nnb > 1  && textreadc(t, t->q0-nnb-1)=='\n' ) nnb++;
+		textshow(t, t->q0-nnb, t->q0-nnb, TRUE);
+		return;
+
+/*
+ *  Home and End now respectively take you to the
+ *  beginning and to the end of the line respectively.
+ *  Also keep the original ^A and ^E keybindings.
+ */
+
+	case 0x01:
 	case Khome:
-		typecommit(t);
-		if(t->org > t->iq1) {
-			q0 = textbacknl(t, t->iq1, 1);
-			textsetorigin(t, q0, TRUE);
-		} else
-			textshow(t, 0, 0, FALSE);
-		return;
-	case Kend:
-		typecommit(t);
-		if(t->iq1 > t->org+t->fr.nchars) {
-			if(t->iq1 > t->file->b.nc) {
-				// should not happen, but does. and it will crash textbacknl.
-				t->iq1 = t->file->b.nc;
-			}
-			q0 = textbacknl(t, t->iq1, 1);
-			textsetorigin(t, q0, TRUE);
-		} else
-			textshow(t, t->file->b.nc, t->file->b.nc, FALSE);
-		return;
-	case 0x01:	/* ^A: beginning of line */
 		typecommit(t);
 		/* go to where ^U would erase, if not already at BOL */
 		nnb = 0;
@@ -753,13 +777,17 @@ texttype(Text *t, Rune r)
 			nnb = textbswidth(t, 0x15);
 		textshow(t, t->q0-nnb, t->q0-nnb, TRUE);
 		return;
-	case 0x05:	/* ^E: end of line */
+	case 0x05:
+	case Kend:
 		typecommit(t);
 		q0 = t->q0;
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
 			q0++;
 		textshow(t, q0, q0, TRUE);
 		return;
+		
+	/* TODO remap CTRL+c to DEL key if flag enabled */
+	/* (or modify rc directly to enable this behavior) */	
 	case Kcmd+'c':	/* %C: copy */
 		typecommit(t);
 		cut(t, t, nil, TRUE, FALSE, nil, 0);
@@ -771,16 +799,15 @@ texttype(Text *t, Rune r)
 	case Kcmd+'Z':	/* %-shift-Z: redo */
 	 	typecommit(t);
 		undo(t, nil, nil, FALSE, 0, nil, 0);
-		return;		
+		return;	
 
 	Tagdown:
 		/* expand tag to show all text */
 		if(!t->w->tagexpand){
-			t->w->tagexpand = TRUE;
-			winresize(t->w, t->w->r, FALSE, TRUE);
+		t->w->tagexpand = TRUE;
+		winresize(t->w, t->w->r, FALSE, TRUE);
 		}
 		return;
-	
 	Tagup:
 		/* shrink tag to single line */
 		if(t->w->tagexpand){
@@ -790,11 +817,16 @@ texttype(Text *t, Rune r)
 		}
 		return;
 	}
+	
+
+	
 	if(t->what == Body){
 		seq++;
 		filemark(t->file);
 	}
-	/* cut/paste must be done after the seq++/filemark */
+	
+	/* cut/paste must be done after the seq++/filemark */
+	
 	switch(r){
 	case Kcmd+'x':	/* %X: cut */
 		typecommit(t);
@@ -817,6 +849,7 @@ texttype(Text *t, Rune r)
 		t->iq1 = t->q1;
 		return;
 	}
+
 	if(t->q1 > t->q0){
 		if(t->ncache != 0)
 			error("text.type");
@@ -824,6 +857,7 @@ texttype(Text *t, Rune r)
 		t->eq0 = ~0;
 	}
 	textshow(t, t->q0, t->q0, 1);
+	
 	switch(r){
 	case 0x06:	/* ^F: complete */
 	case Kins:
@@ -844,9 +878,22 @@ texttype(Text *t, Rune r)
 			typecommit(t);
 		t->iq1 = t->q0;
 		return;
-	case 0x08:	/* ^H: erase character */
+
+	case 0x7F:  /* [delete key] */
+		/* ensure we're not at the end of the buffer */
+		if(t->q1 >= t->file->b.nc) {
+			return;
+		}
+		/* emulate rightarrow key */
+		typecommit(t);
+		textshow(t, t->q1+1, t->q1+1, TRUE);
+		/* emulate backspace key */
+		// r = 0x08; /* needed for textbswidth() to return correct value */
+					 /* now fall through to next case */
+		
+	case 0x08:	/* ^H: erase character [backspace key] */
 	case 0x15:	/* ^U: erase line */
-	case 0x17:	/* ^W: erase word */
+	case 0x17:	/* ^W: erase  word */
 		if(t->q0 == 0)	/* nothing to erase */
 			return;
 		nnb = textbswidth(t, r);

@@ -90,6 +90,10 @@ look3(Text *t, uint q0, uint q1, int external)
 	Plumbmsg *m;
 	Runestr dir;
 	char buf[32];
+	// for backwards search
+	int eval;
+	Range ra;
+	Rune *pat;
 
 	ct = seltext;
 	if(ct == nil)
@@ -183,6 +187,12 @@ look3(Text *t, uint q0, uint q1, int external)
 		bufread(&t->file->b, q0, r, q1-q0);
 		m->data = runetobyte(r, q1-q0);
 		m->ndata = strlen(m->data);
+		if (t->w != nil && t->w->backwards) {
+			pat = runemalloc(q1-q0+1);
+			for (eval = 0; eval < q1-q0; eval++)
+				pat[eval] = r[eval];
+			pat[q1-q0] = 0;
+		}
 		free(r);
 		if(m->ndata<messagesize-1024 && plumbsendtofid(plumbsendfid, m) >= 0){
 			plumbfree(m);
@@ -193,11 +203,27 @@ look3(Text *t, uint q0, uint q1, int external)
 	}
 
 	/* interpret alphanumeric string ourselves */
-	if(expanded == FALSE)
+	if(expanded == FALSE) {
+		if (t->w != nil && t->w->backwards) {
+			free(pat);
+		}
 		return;
+	}
 	if(e.name || e.u.at)
 		openfile(t, &e);
 	else{
+		if (t->w != nil && t->w->backwards) {
+			ra = range(e.q0, e.q1);
+			ra = regexp(TRUE, t, range(-1,-1), ra, pat, '-', &eval);
+			if (ra.q0 < 0 || ra.q1 < 0) {
+				goto Return;
+			}		
+			textshow(t, ra.q0, ra.q1, 1);
+			winsettag(t->w);
+			seltext = t;
+			moveto(mousectl, addpt(frptofchar(&t->fr, t->fr.p0), Pt(4, font->height-4)));
+			goto Return;
+		}
 		if(t->w == nil)
 			return;
 		ct = &t->w->body;
@@ -216,6 +242,9 @@ look3(Text *t, uint q0, uint q1, int external)
 	}
 
    Return:
+	if (t->w != nil && t->w->backwards) {
+		free(pat);
+	}
 	free(e.name);
 	free(e.bname);
 }
@@ -642,7 +671,7 @@ expand(Text *t, uint q0, uint q1, Expand *e)
 			e->jump = FALSE;
 	}
 
-	if(expandfile(t, q0, q1, e))
+	if(expandfile(t, q0, q1, e)) 
 		return TRUE;
 
 	if(q0 == q1){
