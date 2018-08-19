@@ -63,22 +63,22 @@ int bartflag			= FALSE;
  */
 
 
-//#define C_TAGBG		0xFFFFFFFF // [white]
-#define C_TAGBG			0xAEEEEEFF // [light blue]
+// acme built-in colors
+
+#define C_TAGBG			0xE3FFFFFF // [pale blue green]
 #define C_TAGFG			0x000000FF // *text* color
-#define C_TAGHLBG		0x999999FF
+#define C_TAGHLBG		0x9EEEEEFF
 #define C_TAGHLFG		0x000000FF
 
-//#define C_TXTBG		0xFFFFFFFF // [white]
-#define C_TXTBG			0xFFFFEAFF // [light yellow]
+#define C_TXTBG			0xFFFFE3FF // [light yellow]
 #define C_TXTFG			0x000000FF // *text* color
-#define C_TXTHLBG		0x999999FF
+#define C_TXTHLBG		0xEEEE9EFF
 #define C_TXTHLFG		0x000000FF
 
-#define C_WINBUTTON		0x4d4d4dFF
-#define C_COLBUTTON		0x55aaaaFF
-#define C_TMPBUTTON		0x55aaaaFF
-#define C_SCROLLBG		0x999999FF
+#define C_WINBUTTON		0x8888CCFF
+#define C_COLBUTTON		0x8888CCFF
+#define C_TMPBUTTON		0x000099FF
+#define C_SCROLLBG		0x99994CFF
 
-#define C_BUTTON2HL		0x55aaaaFF
-#define C_BUTTON3HL		0x55aaaaFF
+#define C_BUTTON2HL		0xAA0000FF
+#define C_BUTTON3HL		0x006600FF
