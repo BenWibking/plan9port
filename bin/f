@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+ag --nocolor --noheading "$@"
+
+if [ $? -ne 0 ]; then
+	echo 'Not found'
+fi
