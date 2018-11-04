@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+PATH="$PATH:/usr/local/bin:/Library/TeX/texbin"
+source /Users/benwibking/.bashrc
+
+export SHELL="$HOME/9/plan9port/bin/rc"
+#export SHELL="/bin/bash"
+export BROWSER=open
+export TERM=dumb
+export PAGER=nobs
+
+#export acmeshell="/bin/bash"
+export acmeshell="$HOME/9/plan9port/bin/rc"
+
+# Where are the plumber rules?
+acme_plumber_rules="$HOME/lib/plumbing"
+
+if [ "$(pgrep fontsrv)" ]; then
+    echo fontsrv is running
+else
+    fontsrv &
+fi
+
+if [ "$(pgrep plumber)" ]; then
+	echo plumber is running
+else
+	echo starting plumber
+	plumber
+	cat "$acme_plumber_rules" "$PLAN9/plumb/basic" | 9p write plumb/rules
+fi
+
+if [ -f $HOME/acme.dump ]; then
+    acme -a -l $HOME/acme.dump $1
+else
+    acme -a -f /mnt/font/Menlo-Regular/12a/font $1
+#    acme -a -f /mnt/font/Cousine/12a/font $1
+fi

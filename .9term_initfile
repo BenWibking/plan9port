@@ -1,0 +1,18 @@
+source $HOME/.bashrc
+
+_cd () {
+    \cd "$@" &&
+    case "$TERM!$-" in
+    linux!*)
+        ;;
+    *!*i*)
+        awd
+        esac
+}
+       
+alias cd=_cd
+set +o emacs
+set +o vi
+set -a        # autoexport env vars
+
+cd

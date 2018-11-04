@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [ "$(pgrep fontsrv)" ]; then
+    echo fontsrv is running
+else
+    fontsrv &
+fi
+
+#export SHELL="$HOME/9/plan9port/bin/rc"
+#export SHELL="/bin/bash"
+#export PAGER="cat"
+
+CMD="bash --init-file $HOME/.9term_initfile"
+9term -c -f /mnt/font/Menlo-Regular/14a/font $CMD
+
