@@ -1,0 +1,48 @@
+# to update: cat $HOME/lib/plumbing | 9p write plumb/rules
+
+editor = acme
+
+# remote files
+# remember to `sshfs payne:/ ~/mnt/payne/`
+type is text
+data matches '[a-zA-Z¡-￿0-9_\-./]+'
+arg isfile	/Users/benwibking/mnt/payne/$0
+plumb start open $file
+
+# image files go to page
+type is text
+data matches '[a-zA-Z¡-￿0-9_\-./]+'
+data matches '([a-zA-Z¡-￿0-9_\-./]+)\.(jpe?g|JPE?G|gif|GIF|tiff?|TIFF?|ppm|bit|png|PNG)'
+arg isfile	$0
+plumb to image
+plumb start open $file
+
+# postscript/pdf/dvi go to page but not over the a plumb port
+# the port is here for reference but is unused
+type is text
+data matches '[a-zA-Z¡-￿0-9_\-./]+'
+data matches '([a-zA-Z¡-￿0-9_\-./]+)\.(ps|PS|eps|EPS|pdf|PDF|dvi|DVI)'
+arg isfile	$0
+plumb to postscript
+plumb start open $file
+
+# start rule for images without known suffixes
+dst is image
+arg isfile $data
+plumb to image
+plumb start open $data
+
+# start rule for postscript without known suffixes
+dst is postscript
+arg isfile $data
+plumb start open $data
+
+# open HDF5 files with HDFCompass
+type is text
+data matches '[a-zA-Z¡-￿0-9_\-./]+'
+data matches '([a-zA-Z¡-￿0-9_\-./]+)\.(h5|H5|hdf|HDF|hdf5|HDF5)'
+arg isfile	$0
+plumb start /Applications/HDFCompass.app/Contents/MacOS/HDFCompass_0.6.0 $file
+
+include basic
+
