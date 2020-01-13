@@ -13,8 +13,8 @@
  */
 
 char *fontnames[2] = {
-	"/lib/font/bit/profont/profont-12.font",
-	"/lib/font/bit/mntcarlo/mntcarlo.font"
+		      "/mnt/font/NotoMono/12a/font",
+		      "/lib/font/bit/mntcarlo/mntcarlo.font"
 };
 
 /*
