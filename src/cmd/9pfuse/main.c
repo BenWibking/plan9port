@@ -51,6 +51,14 @@
 #  endif
 #endif
 
+#ifndef FMODE_EXEC
+#  if defined(__linux__)
+#    define FMODE_EXEC 040
+#  else
+#    define FMODE_EXEC 0
+#  endif
+#endif
+
 int debug;
 char *argv0;
 char *aname = "";
@@ -583,7 +591,7 @@ _fuseopen(FuseMsg *m, int isdir)
 	flags = in->flags;
 	openmode = flags&3;
 	flags &= ~3;
-	flags &= ~(O_DIRECTORY|O_NONBLOCK|O_LARGEFILE|O_CLOEXEC);
+	flags &= ~(O_DIRECTORY|O_NONBLOCK|O_LARGEFILE|O_CLOEXEC|FMODE_EXEC);
 #ifdef O_NOFOLLOW
 	flags &= ~O_NOFOLLOW;
 #endif
@@ -602,13 +610,14 @@ _fuseopen(FuseMsg *m, int isdir)
 		openmode |= OTRUNC;
 		flags &= ~O_TRUNC;
 	}
+
 	/*
 	 * Could translate but not standard 9P:
 	 *	O_DIRECT -> ODIRECT
 	 *	O_NONBLOCK -> ONONBLOCK
 	 */
 	if(flags){
-		fprint(2, "unexpected open flags %#uo\n", (uint)in->flags);
+		fprint(2, "unexpected open flags requested=%#uo unhandled=%#uo\n", (uint)in->flags, (uint)flags);
 		replyfuseerrno(m, EACCES);
 		return;
 	}
@@ -876,7 +885,7 @@ fusereadlink(FuseMsg *m)
  * are stored in m->d,nd,d0.
  */
 int canpack(Dir*, uvlong, uchar**, uchar*);
-Dir *dotdirs(CFid*);
+Dir *dotdir(CFid*);
 void
 fusereaddir(FuseMsg *m)
 {
@@ -893,8 +902,8 @@ fusereaddir(FuseMsg *m)
 	if(in->offset == 0){
 		fsseek(ff->fid, 0, 0);
 		free(ff->d0);
-		ff->d0 = ff->d = dotdirs(ff->fid);
-		ff->nd = 2;
+		ff->d0 = ff->d = dotdir(ff->fid);
+		ff->nd = 1;
 	}
 	n = in->size;
 	if(n > fusemaxwrite)
@@ -935,20 +944,13 @@ out:
  * We could add .. too, but it isn't necessary.
  */
 Dir*
-dotdirs(CFid *f)
+dotdir(CFid *f)
 {
 	Dir *d;
-	CFid *f1;
 
-	d = emalloc(2*sizeof *d);
+	d = emalloc(1*sizeof *d);
 	d[0].name = ".";
 	d[0].qid = fsqid(f);
-	d[1].name = "..";
-	f1 = fswalk(f, "..");
-	if(f1){
-		d[1].qid = fsqid(f1);
-		fsclose(f1);
-	}
 	return d;
 }
 
